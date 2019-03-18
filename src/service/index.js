@@ -30,8 +30,10 @@ server.register(Inert)
 	
 	server.route({
 		method: 'GET',
-		path: '/hello',
-		handler: (req, h) => h.response('ok')
+		path: '/api/{route*}',
+		handler: ({ params: { route } }, h) => h.response().code(route
+			? 501
+			: 404)
 	})
 	
 	return server.start()
