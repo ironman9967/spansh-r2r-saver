@@ -32,7 +32,7 @@ server.register(Inert)
 		method: 'GET',
 		path: '/api/{route*}',
 		handler: ({ params: { route } }, h) => h.response().code(route
-			? 501
+			? console.log(route.split('/'))
 			: 404)
 	})
 	
