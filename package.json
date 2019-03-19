@@ -12,6 +12,7 @@
 		"build-dev": "npm run build-env development",
 		"build": "npm run build-env production",
 		"start-service": "node dist/index.js",
+		"start-service-only": "npm run build-service && npm run start-service",
 		"start-dev": "npm run build-dev && npm run start-service",
 		"start": "npm run build && npm run start-server"
 	},
@@ -19,8 +20,11 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
+		"form-data": "^2.3.3",
 		"hapi": "^18.1.0",
-		"inert": "^5.1.2"
+		"inert": "^5.1.2",
+		"lodash": "^4.17.11",
+		"node-fetch": "^2.3.0"
 	},
 	"devDependencies": {
 		"@babel/cli": "^7.2.3",
