@@ -24,7 +24,8 @@
 		"hapi": "^18.1.0",
 		"inert": "^5.1.2",
 		"lodash": "^4.17.11",
-		"node-fetch": "^2.3.0"
+		"node-fetch": "^2.3.0",
+		"redis": "^2.8.0"
 	},
 	"devDependencies": {
 		"@babel/cli": "^7.2.3",
