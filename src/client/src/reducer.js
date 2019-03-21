@@ -7,51 +7,58 @@ export default (state = {
     saving: false,
     deleting: false
 }, { type, ...action }) => {
-	const change = {}
-	const clear = () => {
-		change.loading = false
-		change.deleting = false
-		change.saving = false
-		change.adding = false
-		change.routeNames = []
-	}
+	const clear = s => ({
+		...s,
+		loading: false,
+		deleting: false,
+		saving: false,
+		adding: false,
+		routeNames: []
+	})
 	switch (type) {
 		case 'set-route-names':
-			change.routeNames = action.routeNames
-			break
+			return {...state, routeNames: action.routeNames }
 		case 'clear-route-names':
-			change.routeNames = []
-			break
+			return {...state, routeNames: [] }
 		case 'set-selected-route':
-			change.selected = action.route
-			clear()
-			break
+			return {...state, ...clear(state), selected: action.route }
 		case 'loading':
-			change.loading = true
-			break
+			return {...state, loading: true }
 		case 'clear-selected-route':
-			change.selected = null
-			break
+			return {...state, selected: null }
 		case 'show-new-route':
-			change.adding = true
-			break
+			return {...state, adding: true }
 		case 'hide-new-route':
-			clear()
-			break
+			return clear(state)
 		case 'saving':
-			change.saving = true
-			break
+			return {...state, saving: true }
 		case 'saved':
-			clear()
-			break
+			return clear(state)
 		case 'deleting':
-			change.deleting = true
-			break
+			return {...state, deleting: true }
 		case 'deleted':
-			clear()
-			break
+			return clear(state)
+		case 'body-marked-complete':
+			return {
+				...state, 
+				selected : {
+					...state.selected, 
+					systems: state.selected.systems.map(system => system.name === action.system 
+						? ({
+							...system, 
+							bodies: system.bodies.map(body => body.name === action.body 
+								? ({
+									...body, 
+									complete: !body.complete
+									
+								}) 
+								: ({...body}))}) 
+						: ({...system}) 
+					)} 
+				
+			}
 		default:
 			break
 	}
-	return Object.assign({ ...state }, change)
+	return state
 }

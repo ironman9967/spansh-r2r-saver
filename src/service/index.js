@@ -308,7 +308,7 @@ const route = ({ query: { name } }) => {
 						]) => ({
 							id: bodyId,
 							name,
-							complete,
+							complete: complete == 'true',
 							distance_to_arrival,
 							estimated_mapping_value,
 							estimated_scan_value,

@@ -99,7 +99,7 @@ const c = ({
 														<TableCell key={id}>{
 															id === 'complete'
 															? <Checkbox
-																checked={body[id] === 'true'}
+																checked={body[id]}
 																onChange={event => setBodyComplete({
 																	selected,
 																	system,
@@ -136,20 +136,12 @@ export default connect(state => state, {
 		system,
 		body,
 		complete
-	}) => dispatch => fetch([
-		`/api/r2r-route/set-body-complete`,
-		`?routeName=${selected.name}`,
-		`&systemName=${system.name}`,
-		`&bodyName=${body.name}`,
-		`&complete=${complete}`
-	].join(''))
-	.then(res => res.json())
-	.then(res => dispatch({
-		type: 'body-marked-complete',
-		res,
-		route: selected.name,
-		system: system.name,
-		body: body.name,
-		complete
-	}))
+	}) => dispatch => fetch(`/api/r2r-route/set-body-complete?routeName=${selected.name}&systemName=${system.name}&bodyName=${body.name}&complete=${complete}`)
+		.then(() => dispatch({
+			type: 'body-marked-complete',
+			route: selected.name,
+			system: system.name,
+			body: body.name,
+			complete
+		}))
 })(c)
