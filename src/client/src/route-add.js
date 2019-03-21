@@ -7,52 +7,7 @@ import { connect } from 'react-redux'
 
 import TextField from '@material-ui/core/TextField'
 
-const fields = [{
-	id: 'name',
-	label: 'name',
-	type: 'text',
-	defVal: 'route-1'
-},{
-	id: 'to',
-	label: 'to',
-	type: 'text',
-	defVal: ''
-}, {
-	id: 'range',
-	label: 'range',
-	type: 'number',
-	defVal: 69
-}, {
-	id: 'radius',
-	label: 'radius',
-	type: 'number',
-	defVal: 207
-}, {
-	id: 'max_distance',
-	label: 'max distance',
-	type: 'number',
-	defVal: 1000000
-}, {
-	id: 'max_results',
-	label: 'max results',
-	type: 'number',
-	defVal: 10
-}, {
-	id: 'from',
-	label: 'from',
-	type: 'text',
-	defVal: 'Sol'
-}, {
-	id: 'min_value',
-	label: 'min value',
-	type: 'number',
-	defVal: 300000
-}, {
-	id: 'use_mapping_value',
-	label: 'use mapping value',
-	type: 'checkbox',
-	defVal: true
-}]
+import fields from './route-settings-fields'
 
 const c = ({
 	stopAdd,

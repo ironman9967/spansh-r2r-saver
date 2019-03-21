@@ -12,7 +12,7 @@ import fetch from 'node-fetch'
 import redis from 'redis'
 
 const server = Hapi.server({
-	port: 8000,//process.env.PORT || 8000,
+	port: 8000, //process.env.PORT || 8000,
 	routes: {
 		files: {
 			relativeTo: path.resolve(__dirname, 'public')
@@ -107,7 +107,7 @@ const fetchDataFromSpansh = ({ settings }) => {
 				name,
 				...system,
 				bodies: bodies.map(({ id, name, ...body }) => ({
-					id,
+					id: convertNameToId({ name }),
 					name,
 					complete: false,
 					...body
@@ -335,6 +335,25 @@ const route = ({ query: { name } }) => {
 	return Promise.resolve({ error: 'name is required' })
 }
 
+const setBodyComplete = ({ 
+	query: { 
+		routeName, 
+		systemName, 
+		bodyName, 
+		complete
+	}
+}) => getRedisClient()
+	.then(rc => {
+		const routeId = convertNameToId({ name: routeName })
+		const systemId = convertNameToId({ name: systemName })
+		const bodyId = convertNameToId({ name: bodyName })
+		const setString = setStringWithClient({ rc })
+		return setString({
+			key: `${redisGlobalPrepend}.route.${routeId}.system.${systemId}.body.${bodyId}.complete`,
+			value: complete === 'true'
+		}).then(res => ({ res }))
+	})
+
 const deleteRoute = ({ query: { name } }) => {
 	if (name) {
 		return getRedisClient()
@@ -364,7 +383,8 @@ const api = {
 		save,
 		routes,
 		route,
-		'delete-route': deleteRoute
+		'delete-route': deleteRoute,
+		'set-body-complete': setBodyComplete
 	}
 }
 

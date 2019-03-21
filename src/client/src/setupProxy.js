@@ -5,4 +5,5 @@ module.exports = function(app) {
     app.use(proxy('/api/r2r-route/routes', { target: 'http://localhost:8000' }))
     app.use(proxy('/api/r2r-route/route', { target: 'http://localhost:8000' }))
     app.use(proxy('/api/r2r-route/delete-route', { target: 'http://localhost:8000' }))
+    app.use(proxy('/api/r2r-route/set-body-complete', { target: 'http://localhost:8000' }))
 }
