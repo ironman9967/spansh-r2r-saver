@@ -9,11 +9,23 @@ import { createStore, applyMiddleware } from 'redux'
 import { createLogger } from 'redux-logger'
 import thunk from 'redux-thunk'
 
+import io from 'socket.io-client'
+
 import reducer from './reducer'
 
 const logger = createLogger()
 
 const store = createStore(reducer, applyMiddleware(thunk, logger)) //logger must be last
+
+const socket = io()
+socket.on('ping', () => {
+  console.log('server ping')
+  socket.emit('ack')
+})
+socket.on('body-marked-complete', packet => store.dispatch({
+  type: 'body-marked-complete',
+  ...packet
+}))
 
 const rootElement = document.getElementById('root')
 

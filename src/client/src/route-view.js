@@ -71,7 +71,10 @@ const c = ({
 			</TableHead>
 			<TableBody>
 			{
-				selected.systems.map((system, i) => (
+				selected.systems.sort(({ order: o1 }, { order: o2}) => o1 <= o2
+					? -1
+					: 1
+				).map((system, i) => (
 					<TableRow key={i}>
 					{
 						systemFields.map(({ id }) => id !== 'bodies'
@@ -137,11 +140,11 @@ export default connect(state => state, {
 		body,
 		complete
 	}) => dispatch => fetch(`/api/r2r-route/set-body-complete?routeName=${selected.name}&systemName=${system.name}&bodyName=${body.name}&complete=${complete}`)
-		.then(() => dispatch({
-			type: 'body-marked-complete',
-			route: selected.name,
-			system: system.name,
-			body: body.name,
-			complete
-		}))
+		// .then(() => dispatch({
+		// 	type: 'body-marked-complete',
+		// 	route: selected.name,
+		// 	system: system.name,
+		// 	body: body.name,
+		// 	complete
+		// }))
 })(c)

@@ -49,7 +49,7 @@ export default (state = {
 							bodies: system.bodies.map(body => body.name === action.body 
 								? ({
 									...body, 
-									complete: !body.complete
+									complete: action.complete
 									
 								}) 
 								: ({...body}))}) 

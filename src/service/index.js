@@ -4,6 +4,8 @@ import path from 'path'
 import Hapi from 'hapi'
 import Inert from 'inert'
 
+import SocketIO from 'socket.io'
+
 import { get } from 'lodash/fp'
 
 import FormData from 'form-data'
@@ -12,12 +14,18 @@ import fetch from 'node-fetch'
 import redis from 'redis'
 
 const server = Hapi.server({
-	port: 8000, //process.env.PORT || 8000,
+	port: process.env.PORT || 8000,
 	routes: {
 		files: {
 			relativeTo: path.resolve(__dirname, 'public')
 		}
 	}
+})
+	
+const io = SocketIO.listen(server.listener)
+io.on('connection', socket => {
+	socket.on('ack', () => console.log('client ack'))
+	socket.emit('ping')
 })
 
 const spanshApiRoute = 'https://spansh.co.uk/api'
@@ -97,6 +105,7 @@ const fetchDataFromSpansh = ({ settings }) => {
 	.then(route => {
 		const { name: origin } = route.shift()
 		const { name: destination } = route.pop()
+		let counter = 0
 		return {
 			created: Date.now(),
 			origin,
@@ -104,6 +113,7 @@ const fetchDataFromSpansh = ({ settings }) => {
 			settings,
 			systems: route.map(({ bodies, name, ...system }) => ({
 				id: convertNameToId({ name }),
+				order: counter++,
 				name,
 				...system,
 				bodies: bodies.map(({ id, name, ...body }) => ({
@@ -164,6 +174,10 @@ const save = ({ query: { name, ...settings } }) => {
 					.then(() => setString({
 						key: `${redisGlobalPrepend}.route.${route.id}.system.${system.id}.jumps`,
 						value: system.jumps
+					}))
+					.then(() => setString({
+						key: `${redisGlobalPrepend}.route.${route.id}.system.${system.id}.order`,
+						value: system.order
 					}))
 					.then(() => Promise.all(system.bodies.map(body => 
 						addToSet({
@@ -269,16 +283,19 @@ const route = ({ query: { name } }) => {
 				})
 				.then(systems => Promise.all(systems.map(systemId => Promise.all([
 						'name',
+						'order',
 						'jumps'
 					].map(k => getString({
 						key: `${redisGlobalPrepend}.route.${routeId}.system.${systemId}.${k}`
 					})))
 					.then(([
 						name,
+						order,
 						jumps
 					]) => ({
 						id: systemId,
 						name,
+						order,
 						jumps
 					}))
 					.then(system => getSetMembers({
@@ -351,8 +368,18 @@ const setBodyComplete = ({
 		return setString({
 			key: `${redisGlobalPrepend}.route.${routeId}.system.${systemId}.body.${bodyId}.complete`,
 			value: complete === 'true'
-		}).then(res => ({ res }))
+		})
+		.then(res => {
+			io.emit('body-marked-complete', {
+				route: routeName,
+				system: systemName,
+				body: bodyName,
+				complete: complete === 'true'
+			})
+			return res
+		})
 	})
+	.then(res => ({ res }))
 
 const deleteRoute = ({ query: { name } }) => {
 	if (name) {
