@@ -12,7 +12,7 @@ import fetch from 'node-fetch'
 import redis from 'redis'
 
 const server = Hapi.server({
-	port: process.env.PORT || 8000,
+	port: 8000,//process.env.PORT || 8000,
 	routes: {
 		files: {
 			relativeTo: path.resolve(__dirname, 'public')
@@ -84,9 +84,9 @@ const delKeyWithClient = ({ rc }) => ({
 	? reject(err)
 	: resolve(reply)))
 		
-const view = ({ query }) => {
+const fetchDataFromSpansh = ({ settings }) => {
 	const form = new FormData()
-	Object.keys(query).forEach(k => form.append(k, query[k]))
+	Object.keys(settings).forEach(k => form.append(k, settings[k]))
 	return fetch(`${spanshApiRoute}/riches/route`, {
 		method: 'POST',
 		body: form,
@@ -101,7 +101,7 @@ const view = ({ query }) => {
 			created: Date.now(),
 			origin,
 			destination,
-			settings: query,
+			settings,
 			systems: route.map(({ bodies, name, ...system }) => ({
 				id: convertNameToId({ name }),
 				name,
@@ -117,9 +117,9 @@ const view = ({ query }) => {
 	})
 }
 		
-const save = ({ query: { name, ...query } }) => {
+const save = ({ query: { name, ...settings } }) => {
 	if (name) {
-		return view({ query })
+		return fetchDataFromSpansh({ settings })
 		.then(rawRoute => new Promise(resolve => {
 			const route = {
 				id: convertNameToId({ name }),
@@ -361,7 +361,6 @@ const deleteRoute = ({ query: { name } }) => {
 
 const api = {
 	'r2r-route': {
-		view,
 		save,
 		routes,
 		route,
@@ -369,8 +368,7 @@ const api = {
 	}
 }
 
-server.register(Inert)
-.then(() => {
+server.register(Inert).then(() => {
 	
 	server.route({
 		method: 'GET',
@@ -406,5 +404,4 @@ server.register(Inert)
 	})
 	
 	return server.start()
-})
-.then(() => console.log('server up at:', server.info.uri))
+}).then(() => console.log('server up at:', server.info.uri))
