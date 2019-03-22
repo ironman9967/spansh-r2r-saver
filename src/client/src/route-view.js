@@ -15,7 +15,7 @@ import TablePagination from '@material-ui/core/TablePagination'
 import Checkbox from '@material-ui/core/Checkbox'
 import TextField from '@material-ui/core/TextField'
 
-// import routeSettingFields from './route-settings-fields'
+import routeSettingFields from './route-settings-fields'
 
 const systemFields = [{
 	id: 'name',
@@ -68,6 +68,48 @@ const c = ({
 		<div className="App">
 			<div>ROUTE VIEW:</div>
 			<div onClick={clearSelected}>{'<-'}</div>
+			<div>ROUTE:</div>
+			<Table>
+				<TableHead>
+					<TableRow>
+					{
+						routeSettingFields.map(({ label }, i) => (
+							<TableCell key={i}>{label}</TableCell>
+						))
+					}
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					<TableRow>
+					{
+						routeSettingFields.map(({ id }, i) => [
+							'name',
+							'total_jumps',
+							'completed_jumps',
+							'total_bodies',
+							'completed_bodies',
+							'progress'
+						].includes(id)
+							? (
+								<TableCell
+									key={i}
+								>
+									{selected[id]}
+								</TableCell>
+							)
+							: (
+								<TableCell
+									key={i}
+								>
+									{selected.settings[id]}
+								</TableCell>
+							)
+						)
+					}
+					</TableRow>
+				</TableBody>
+			</Table>
+			<div>SYSTEMS:</div>
 			<Table>
 				<TableHead>
 					<TableRow>
@@ -88,7 +130,9 @@ const c = ({
 						{
 							systemFields.map(({ id }) => id !== 'bodies'
 								? (
-									<TableCell key={id}>{system[id]}</TableCell>
+									<TableCell 
+										key={id}
+									>{system[id]}</TableCell>
 								)
 								: (
 									<TableCell key={id}>
