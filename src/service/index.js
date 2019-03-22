@@ -23,10 +23,6 @@ const server = Hapi.server({
 })
 	
 const io = SocketIO.listen(server.listener)
-io.on('connection', socket => {
-	socket.on('ack', () => console.log('client ack'))
-	socket.emit('ping')
-})
 
 const spanshApiRoute = 'https://spansh.co.uk/api'
 const redisGlobalPrepend = 'spansh-r2r-saver'
@@ -47,6 +43,14 @@ const getRedisClient = opts => new Promise(resolve => {
 	rc.once('ready', () => resolve(rc))
 })
 
+const addToSortedSetWithClient = ({ rc }) => ({
+	key,
+	score,
+	value
+}) => new Promise((resolve, reject) => rc.zadd(key, score, value, (err, reply) => err
+	? reject(err)
+	: resolve(reply)))
+
 const addToSetWithClient = ({ rc }) => ({
 	key,
 	value
@@ -64,6 +68,14 @@ const setStringWithClient = ({ rc }) => ({
 const getSetMemebersWithClient = ({ rc }) => ({ 
 	key 
 }) => new Promise((resolve, reject) => rc.smembers(key, (err, reply) => err
+	? reject(err)
+	: resolve(reply)))
+	
+const getSortedSetRangeWithClient = ({ rc }) => ({ 
+	key,
+	start = 0,
+	stop = -1
+}) => new Promise((resolve, reject) => rc.zrange(key, start, stop, (err, reply) => err
 	? reject(err)
 	: resolve(reply)))
 
@@ -111,6 +123,7 @@ const fetchDataFromSpansh = ({ settings }) => {
 			origin,
 			destination,
 			settings,
+			systemCount: route.length,
 			systems: route.map(({ bodies, name, ...system }) => ({
 				id: convertNameToId({ name }),
 				order: counter++,
@@ -138,6 +151,7 @@ const save = ({ query: { name, ...settings } }) => {
 			}
 			getRedisClient()
 			.then(rc => {
+				const addToSortedSet = addToSortedSetWithClient({ rc })
 				const addToSet = addToSetWithClient({ rc })
 				const setString = setStringWithClient({ rc })
 				addToSet({
@@ -163,8 +177,9 @@ const save = ({ query: { name, ...settings } }) => {
 					})
 				)))
 				.then(() => Promise.all(route.systems.map(system => 
-					addToSet({
+					addToSortedSet({
 						key: `${redisGlobalPrepend}.route.${route.id}.systems`,
+						score: system.order,
 						value: system.id
 					})
 					.then(() => setString({
@@ -216,18 +231,28 @@ const routes = () => getRedisClient()
 	})
 })
 		
-const route = ({ query: { name } }) => {
+const route = ({ 
+	query: { 
+		name, 
+		page: pageStr, 
+		numPerPage: numPerPageStr
+	}
+}) => {
 	if (name) {
+		const page = pageStr ? parseInt(pageStr) : void 0
+		const numPerPage = numPerPageStr ? parseInt(numPerPageStr) : void 0
 		return getRedisClient()
 		.then(rc => {
 			const routeId = convertNameToId({ name })
 			const getSetMembers = getSetMemebersWithClient({ rc })
+			const getSortedSetRange = getSortedSetRangeWithClient({ rc })
 			const getString = getStringWithClient({ rc })
 			return Promise.all([
 				'name',
 				'created',
 				'origin',
-				'destination'
+				'destination',
+				'systemCount'
 			].map(k => getString({
 				key: `${redisGlobalPrepend}.route.${routeId}.${k}`
 			})))
@@ -235,13 +260,15 @@ const route = ({ query: { name } }) => {
 				name,
 				created,
 				origin,
-				destination
+				destination,
+				systemCount
 			]) => ({
 				id: routeId,
 				name,
 				created,
 				origin,
-				destination
+				destination,
+				systemCount: parseInt(systemCount)
 			}))
 			.then(route => Promise.all([
 					'radius',
@@ -278,10 +305,19 @@ const route = ({ query: { name } }) => {
 					}
 				}))
 			)
-			.then(route => getSetMembers({
-					key: `${redisGlobalPrepend}.route.${routeId}.systems`
+			.then(route => {
+				const paged = page != void 0 && numPerPage != void 0
+				return getSortedSetRange({
+					key: `${redisGlobalPrepend}.route.${routeId}.systems`,
+					start: paged
+						? page * numPerPage
+						: 0,
+					stop: paged
+						? (page * numPerPage) + (numPerPage - 1)
+						: -1
 				})
-				.then(systems => Promise.all(systems.map(systemId => Promise.all([
+				.then(systems => Promise.all(systems
+					.map(systemId => Promise.all([
 						'name',
 						'order',
 						'jumps'
@@ -342,7 +378,8 @@ const route = ({ query: { name } }) => {
 						...route,
 						systems
 					}))
-			))
+				)
+			})
 			.then(route => {
 				rc.quit()
 				return route
@@ -370,12 +407,12 @@ const setBodyComplete = ({
 			value: complete === 'true'
 		})
 		.then(res => {
-			io.emit('body-marked-complete', {
+			process.nextTick(() => io.emit('body-marked-complete', {
 				route: routeName,
 				system: systemName,
 				body: bodyName,
 				complete: complete === 'true'
-			})
+			}))
 			return res
 		})
 	})

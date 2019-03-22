@@ -10,7 +10,10 @@ import TableHead from '@material-ui/core/TableHead'
 import TableBody from '@material-ui/core/TableBody'
 import TableRow from '@material-ui/core/TableRow'
 import TableCell from '@material-ui/core/TableCell'
+import TableFooter from '@material-ui/core/TableFooter'
+import TablePagination from '@material-ui/core/TablePagination'
 import Checkbox from '@material-ui/core/Checkbox'
+import TextField from '@material-ui/core/TextField'
 
 // import routeSettingFields from './route-settings-fields'
 
@@ -53,82 +56,130 @@ const bodyFields = [{
 
 const c = ({
 	selected,
+	selectedSystemCount,
+	selectedSystemsPage,
+	selectedSystemsNumPerPage,
+	updateSelected,
 	clearSelected,
 	setBodyComplete
-}) => (
-	<div className="App">
-		<div>ROUTE VIEW:</div>
-		<div onClick={clearSelected}>{'<-'}</div>
-		<Table>
-			<TableHead>
-				<TableRow>
-				{
-					systemFields.map(({ id, label }) => (
-						<TableCell key={id}>{label}</TableCell>
-					))
-				}
-				</TableRow>
-			</TableHead>
-			<TableBody>
-			{
-				selected.systems.sort(({ order: o1 }, { order: o2}) => o1 <= o2
-					? -1
-					: 1
-				).map((system, i) => (
-					<TableRow key={i}>
+}) => {
+	let goToPageStr = '0'
+	return (
+		<div className="App">
+			<div>ROUTE VIEW:</div>
+			<div onClick={clearSelected}>{'<-'}</div>
+			<Table>
+				<TableHead>
+					<TableRow>
 					{
-						systemFields.map(({ id }) => id !== 'bodies'
-							? (
-								<TableCell key={id}>{system[id]}</TableCell>
-							)
-							: (
-								<TableCell key={id}>
-									<Table>
-										<TableHead>
-											<TableRow>
-											{
-												bodyFields.map(({ id, label }) => (
-													<TableCell key={id}>{label}</TableCell>
-												))
-											}
-											</TableRow>
-										</TableHead>
-										<TableBody>
-										{
-											system.bodies.map((body, i) => (
-												<TableRow key={i}>
+						systemFields.map(({ id, label }) => (
+							<TableCell key={id}>{label}</TableCell>
+						))
+					}
+					</TableRow>
+				</TableHead>
+				<TableBody>
+				{
+					selected.systems.sort(({ order: o1 }, { order: o2}) => o1 <= o2
+						? -1
+						: 1
+					).map((system, i) => (
+						<TableRow key={i}>
+						{
+							systemFields.map(({ id }) => id !== 'bodies'
+								? (
+									<TableCell key={id}>{system[id]}</TableCell>
+								)
+								: (
+									<TableCell key={id}>
+										<Table>
+											<TableHead>
+												<TableRow>
 												{
-													bodyFields.map(({ id }) => (
-														<TableCell key={id}>{
-															id === 'complete'
-															? <Checkbox
-																checked={body[id]}
-																onChange={event => setBodyComplete({
-																	selected,
-																	system,
-																	body,
-																	complete: event.target.checked
-																})}
-															/>
-															: body[id]
-														}</TableCell>
+													bodyFields.map(({ id, label }) => (
+														<TableCell key={id}>{label}</TableCell>
 													))
 												}
 												</TableRow>
-											))
-										}
-										</TableBody>
-									</Table>
-								</TableCell>
-							))
-					}
+											</TableHead>
+											<TableBody>
+											{
+												system.bodies.map((body, i) => (
+													<TableRow key={i}>
+													{
+														bodyFields.map(({ id }) => (
+															<TableCell key={id}>{
+																id === 'complete'
+																? <Checkbox
+																	checked={body[id]}
+																	onChange={event => setBodyComplete({
+																		selected,
+																		system,
+																		body,
+																		complete: event.target.checked
+																	})}
+																/>
+																: body[id]
+															}</TableCell>
+														))
+													}
+													</TableRow>
+												))
+											}
+											</TableBody>
+										</Table>
+									</TableCell>
+								))
+						}
+						</TableRow>
+					))
+				}
+				</TableBody>
+				<TableFooter>
+					<TableRow>
+						<TablePagination
+							rowsPerPageOptions={[5, 10, 25]}
+							colSpan={3}
+							count={selected.systemCount}
+							rowsPerPage={selectedSystemsNumPerPage}
+							page={selectedSystemsPage}
+							SelectProps={{
+								native: true,
+							}}
+							onChangePage={(event, page) => updateSelected({ 
+								name: selected.name,
+								page,
+								numPerPage: selectedSystemsNumPerPage
+							})}
+							onChangeRowsPerPage={event => updateSelected({ 
+								name: selected.name,
+								page: 0,
+								numPerPage: parseInt(event.target.value)
+							})}
+						/>
 					</TableRow>
-				))
-			}
-			</TableBody>
-		</Table>
-	</div>
-)
+				</TableFooter>
+			</Table>
+			<TextField
+				label={`1-${Math.ceil(selected.systemCount / selectedSystemsNumPerPage)}`}
+				onChange={event => goToPageStr = event.target.value}
+			/>
+			<div onClick={() => {
+				const page = parseInt(goToPageStr) - 1
+				if (!isNaN(page)) {
+					updateSelected({ 
+						name: selected.name,
+						page,
+						numPerPage: selectedSystemsNumPerPage
+					})
+				}
+				else {
+					console.log(`'${goToPageStr}' is not a number`)
+				}
+			}}>go to page</div>
+		</div>
+	)
+}
 
 export default connect(state => state, {
 	clearSelected: () => ({
@@ -139,12 +190,29 @@ export default connect(state => state, {
 		system,
 		body,
 		complete
-	}) => dispatch => fetch(`/api/r2r-route/set-body-complete?routeName=${selected.name}&systemName=${system.name}&bodyName=${body.name}&complete=${complete}`)
-		// .then(() => dispatch({
-		// 	type: 'body-marked-complete',
-		// 	route: selected.name,
-		// 	system: system.name,
-		// 	body: body.name,
-		// 	complete
-		// }))
+	}) => dispatch => fetch(`/api/r2r-route/set-body-complete?routeName=${selected.name}&systemName=${system.name}&bodyName=${body.name}&complete=${complete}`),
+	updateSelected: ({
+		name,
+		page,
+		numPerPage
+	}) => dispatch => {
+		dispatch({
+			type: 'loading'
+		})
+		dispatch({
+			type: 'set-selected-num-per-page',
+			page,
+			numPerPage
+		})
+		dispatch({
+			type: 'set-selected-page',
+			page
+		})
+		fetch(`/api/r2r-route/route?name=${name}&page=${page}&numPerPage=${numPerPage}`)
+			.then(res => res.json())
+			.then(route => dispatch({
+				type: 'set-selected-route',
+				route
+			}))
+	}
 })(c)

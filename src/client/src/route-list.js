@@ -24,7 +24,11 @@ class c extends Component {
 				{
 					this.props.routeNames.map((name, i) => (
 						<div key={i}>
-							<div onClick={() => this.props.selectRoute({ name })}>{name}</div>
+							<div onClick={() => this.props.selectRoute({ 
+								name,
+								page: this.props.selectedSystemsPage,
+								numPerPage: this.props.selectedSystemsNumPerPage 
+							})}>{name}</div>
 							<button onClick={() => this.props.deleteRoute({ name })}>X</button>
 						</div>
 					))
@@ -44,8 +48,12 @@ export default connect(state => state, {
 	clearRouteNames: () => ({
 		type: 'clear-route-names'
 	}),
-	selectRoute: ({ name }) => dispatch => {
-		fetch(`/api/r2r-route/route?name=${name}`)
+	selectRoute: ({ 
+		name,
+		page,
+		numPerPage
+	}) => dispatch => {
+		fetch(`/api/r2r-route/route?name=${name}&page=${page}&numPerPage=${numPerPage}`)
 			.then(res => res.json())
 			.then(route => dispatch({
 				type: 'set-selected-route',

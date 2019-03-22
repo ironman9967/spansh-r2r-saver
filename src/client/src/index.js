@@ -18,10 +18,6 @@ const logger = createLogger()
 const store = createStore(reducer, applyMiddleware(thunk, logger)) //logger must be last
 
 const socket = io()
-socket.on('ping', () => {
-  console.log('server ping')
-  socket.emit('ack')
-})
 socket.on('body-marked-complete', packet => store.dispatch({
   type: 'body-marked-complete',
   ...packet

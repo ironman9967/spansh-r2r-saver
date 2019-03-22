@@ -2,6 +2,8 @@
 export default (state = {
 	routeNames: [],
     selected: null,
+    selectedSystemsPage: 0,
+    selectedSystemsNumPerPage: 5,
     loading: false,
     adding: false,
     saving: false,
@@ -21,7 +23,11 @@ export default (state = {
 		case 'clear-route-names':
 			return {...state, routeNames: [] }
 		case 'set-selected-route':
-			return {...state, ...clear(state), selected: action.route }
+			return {
+				...state, 
+				...clear(state), 
+				selected: action.route
+			}
 		case 'loading':
 			return {...state, loading: true }
 		case 'clear-selected-route':
@@ -56,6 +62,14 @@ export default (state = {
 						: ({...system}) 
 					)} 
 				
+			}
+		case 'set-selected-page':
+			return { ...state, selectedSystemsPage: action.page }
+		case 'set-selected-num-per-page':
+			return { 
+				...state, 
+				selectedSystemsPage: action.page,
+				selectedSystemsNumPerPage: action.numPerPage
 			}
 		default:
 			break
