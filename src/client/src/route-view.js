@@ -86,7 +86,12 @@ const c = ({
 					{
 						routeSettingFields.map(({ id }, i) => id === 'name'
 							? (
-								<TableCell key={i}>{selected.name}</TableCell>
+								<TableCell 
+									key={i}
+									style={{
+										minWidth: 100
+									}}
+								>{selected.name}</TableCell>
 							)
 							: (
 								<TableCell key={i}>{selected.settings[id]}</TableCell>
@@ -101,7 +106,16 @@ const c = ({
 				<TableHead>
 					<TableRow>
 					{
-						systemFields.map(({ id, label }) => (
+						systemFields.map(({ id, label }) => id === 'name'
+						? (
+							<TableCell 
+								key={id}
+								style={{
+									minWidth: 200
+								}}
+							>{label}</TableCell>
+						)
+						: (
 							<TableCell key={id}>{label}</TableCell>
 						))
 					}

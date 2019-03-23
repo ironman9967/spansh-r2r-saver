@@ -18,10 +18,12 @@ const logger = createLogger()
 const store = createStore(reducer, applyMiddleware(thunk, logger)) //logger must be last
 
 const socket = io()
-socket.on('body-marked-complete', packet => store.dispatch({
-  type: 'body-marked-complete',
-  ...packet
-}))
+const events = [
+  'body-marked-complete',
+  'completed_bodies',
+  'completed_jumps'
+]
+events.forEach(type => socket.on(type, p => store.dispatch({ type, ...p })))
 
 const rootElement = document.getElementById('root')
 

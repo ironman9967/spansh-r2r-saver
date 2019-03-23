@@ -62,7 +62,6 @@ export default connect(state => state, {
 				defVal
 			}) => `${id}=${route[id]}`).join('&')
 		}`)
-		.then(res => res.json())
 		.then(() => dispatch({
 			type: 'saved'
 		}))

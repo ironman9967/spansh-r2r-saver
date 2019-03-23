@@ -52,6 +52,12 @@ const addToSortedSetWithClient = ({ rc }) => ({
 }) => new Promise((resolve, reject) => rc.zadd(key, score, value, (err, reply) => err
 	? reject(err)
 	: resolve(reply)))
+	
+const lengthOfSortedSetWithClient = ({ rc }) => ({
+	key
+}) => new Promise((resolve, reject) => rc.zcount(key, '-inf', '+inf', (err, reply) => err
+	? reject(err)
+	: resolve(reply)))
 
 const addToSetWithClient = ({ rc }) => ({
 	key,
@@ -109,8 +115,8 @@ const removeFromSetWithClient = ({ rc }) => ({
 	: resolve(reply)))
 	
 const keysWithClient = ({ rc }) => ({
-	search
-}) => new Promise((resolve, reject) => rc.keys(search, (err, reply) => err
+	pattern
+}) => new Promise((resolve, reject) => rc.keys(pattern, (err, reply) => err
 	? reject(err)
 	: resolve(reply)))
 	
@@ -147,13 +153,16 @@ const fetchDataFromSpansh = ({ settings }) => {
 					order: sysCounter++,
 					name,
 					...system,
-					bodies: bodies.map(({ id, name, ...body }) => ({
-						id: convertNameToId({ name }),
-						order: bodyCounter++,
-						name,
-						complete: false,
-						...body
-					}))
+					bodies: bodies.map(({ id, name: fullBodyName, ...body }) => {
+						const bodyName = fullBodyName.replace(name, '')
+						return {
+							id: convertNameToId({ name: bodyName }),
+							order: bodyCounter++,
+							name: bodyName,
+							complete: false,
+							...body
+						}
+					})
 				}
 			})
 		}
@@ -163,7 +172,7 @@ const fetchDataFromSpansh = ({ settings }) => {
 const save = ({ query: { name, ...settings } }) => {
 	if (name) {
 		return fetchDataFromSpansh({ settings })
-		.then(rawRoute => new Promise(resolve => {
+		.then(rawRoute => {
 			const route = {
 				id: convertNameToId({ name }),
 				name,
@@ -182,16 +191,15 @@ const save = ({ query: { name, ...settings } }) => {
 				total_credits: 0,
 				total_jumps: 0,
 				total_bodies: 0,
-				completed_jumps: 0,
 				completed_bodies: 0
 			})
-			getRedisClient()
+			return getRedisClient()
 			.then(rc => {
 				const addToSortedSet = addToSortedSetWithClient({ rc })
 				const addToSet = addToSetWithClient({ rc })
 				const setString = setStringWithClient({ rc })
 				const incrementBy = incrementByWithClient({ rc })
-				addToSet({
+				return addToSet({
 					key: `${redisGlobalPrepend}.routes`,
 					value: route.id
 				})
@@ -245,17 +253,16 @@ const save = ({ query: { name, ...settings } }) => {
 						.then(() => Promise.all(Object.keys(body).map(k =>
 							setString({
 								key: `${redisGlobalPrepend}.route.${route.id}.system.${system.id}.body.${body.id}.${k}`,
-								value: body[k]
+								value: k == 'name' 
+									? body[k].replace(system.name, '')
+									: body[k]
 							})
 						)))
 					)))
 				)))
-				.then(() => {
-					rc.quit()
-					resolve(route)
-				})
+				.then(() => rc.quit())
 			})
-		}))
+		})
 	}
 	return Promise.resolve({ error: 'name is required' })
 }
@@ -268,9 +275,9 @@ const routes = () => getRedisClient()
 	.then(routes => Promise.all(routes.map(routeId => getString({
 		key: `${redisGlobalPrepend}.route.${routeId}.name`
 	}))))
-	.then(routes => {
+	.then(routeNames => {
 		rc.quit()
-		return routes
+		return routeNames
 	})
 })
 		
@@ -351,7 +358,6 @@ const route = ({
 					'total_credits',
 					'total_jumps',
 					'total_bodies',
-					'completed_jumps',
 					'completed_bodies'
 				].map(k => getString({
 					key: `${redisGlobalPrepend}.route.${routeId}.stats.${k}`
@@ -360,7 +366,6 @@ const route = ({
 					total_credits,
 					total_jumps,
 					total_bodies,
-					completed_jumps,
 					completed_bodies
 				]) => ({
 					...route,
@@ -368,7 +373,6 @@ const route = ({
 						total_credits: parseInt(total_credits),
 						total_jumps: parseInt(total_jumps),
 						total_bodies: parseInt(total_bodies),
-						completed_jumps: parseInt(completed_jumps),
 						completed_bodies: parseInt(completed_bodies)
 					}
 				}))
@@ -477,32 +481,32 @@ const setBodyComplete = ({
 		const setString = setStringWithClient({ rc })
 		const incrementBy = incrementByWithClient({ rc })
 		const decrementBy = decrementByWithClient({ rc })
+		
 		const complete = completeStr === 'true'
+		const routeKey = `${redisGlobalPrepend}.route.${routeId}`
+		const systemKey = `${routeKey}.system.${systemId}`
+		const statsKey = `${routeKey}.stats`
 		const adjustment = {
-			key: `${redisGlobalPrepend}.route.${routeId}.stats.completed_bodies`,
+			key: `${statsKey}.completed_bodies`,
 			value: 1
 		}
-		Promise.all([
-			complete ? incrementBy(adjustment) : decrementBy(adjustment),
-			Promise.resolve(0)
-		])
-		.then(([ completed_bodies, completed_jumps ]) => {
-			process.nextTick(() => io.emit('body-marked-complete', {
+		const broadcast = (e, p) => process.nextTick(() => io.emit(e, p))
+		setString({
+			key: `${systemKey}.body.${bodyId}.complete`,
+			value: complete
+		})
+		.then(() => {
+			broadcast('body-marked-complete', {
 				route: routeName,
 				system: systemName,
 				body: bodyName,
-				complete,
-				completed_bodies,
-				completed_jumps
-			}))
+				complete
+			})
+			return complete ? incrementBy(adjustment) : decrementBy(adjustment)
 		})
-		return setString({
-			key: `${redisGlobalPrepend}.route.${routeId}.system.${systemId}.body.${bodyId}.complete`,
-			value: complete
-		})
-		
+		.then(completed_bodies => broadcast('completed_bodies', { completed_bodies }))
+		.then(() => rc.quit())
 	})
-	.then(res => ({ res }))
 
 const deleteRoute = ({ query: { name } }) => {
 	if (name) {
@@ -522,7 +526,9 @@ const deleteRoute = ({ query: { name } }) => {
 			.then(keys => Promise.all(keys.map(key => delKey({
 				key
 			}))))
-			.then(() => { rc.quit() })
+			.then(() => { 
+				rc.quit()
+			})
 		})
 	}
 	return Promise.resolve({ error: 'name is required' })

@@ -15,20 +15,17 @@ const routeStatFields = [{
 	id: 'progress',
 	label: 'progress'
 }, {
-	id: 'total_credits',
-	label: 'total credits'
-}, {
-	id: 'total_jumps',
-	label: 'total jumps'
-}, {
-	id: 'completed_jumps',
-	label: 'completed jumps'
+	id: 'completed_bodies',
+	label: 'completed bodies'
 }, {
 	id: 'total_bodies',
 	label: 'total bodies'
 }, {
-	id: 'completed_bodies',
-	label: 'completed bodies'
+	id: 'total_jumps',
+	label: 'total jumps'
+}, {
+	id: 'total_credits',
+	label: 'total credits'
 }]
 
 const c = ({

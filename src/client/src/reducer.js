@@ -49,11 +49,6 @@ export default (state = {
 				...state, 
 				selected : {
 					...state.selected,
-					stats: {
-						...state.selected.stats,
-						completed_bodies: action.completed_bodies,
-						completed_jumps: action.completed_jumps
-					},
 					systems: state.selected.systems.map(system => system.name === action.system 
 						? ({
 							...system, 
@@ -68,6 +63,19 @@ export default (state = {
 					)} 
 				
 			}
+		case 'completed_bodies':
+			return {
+				...state,
+				selected: {
+					...state.selected,
+					stats: {
+						...state.selected.stats,
+						completed_bodies: action.completed_bodies
+					}
+				}
+			}
+		// case 'completed_jumps':
+		// 	return {}
 		case 'set-selected-page':
 			return { ...state, selectedSystemsPage: action.page }
 		case 'set-selected-num-per-page':
