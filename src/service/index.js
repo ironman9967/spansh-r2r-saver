@@ -66,6 +66,20 @@ const setStringWithClient = ({ rc }) => ({
 }) => new Promise((resolve, reject) => rc.set(key, value, (err, reply) => err
 	? reject(err)
 	: resolve(reply)))
+
+const incrementByWithClient = ({ rc }) => ({
+	key,
+	value
+}) => new Promise((resolve, reject) => rc.incrby(key, value, (err, reply) => err
+	? reject(err)
+	: resolve(reply)))
+
+const decrementByWithClient = ({ rc }) => ({
+	key,
+	value
+}) => new Promise((resolve, reject) => rc.decrby(key, value, (err, reply) => err
+	? reject(err)
+	: resolve(reply)))
 	
 const getSetMemebersWithClient = ({ rc }) => ({ 
 	key 
@@ -155,11 +169,28 @@ const save = ({ query: { name, ...settings } }) => {
 				name,
 				...rawRoute
 			}
+			route.stats = route.systems.reduce((stats, s) => {
+				stats.total_jumps += parseInt(s.jumps)
+				stats.total_bodies += s.bodies.length
+				stats.total_credits += s.bodies.reduce((total_credits, b) =>
+					total_credits + (settings.use_mapping_value
+						? parseInt(b.estimated_mapping_value)
+						: parseInt(b.estimated_scan_value))
+				, 0)
+				return stats
+			}, {
+				total_credits: 0,
+				total_jumps: 0,
+				total_bodies: 0,
+				completed_jumps: 0,
+				completed_bodies: 0
+			})
 			getRedisClient()
 			.then(rc => {
 				const addToSortedSet = addToSortedSetWithClient({ rc })
 				const addToSet = addToSetWithClient({ rc })
 				const setString = setStringWithClient({ rc })
+				const incrementBy = incrementByWithClient({ rc })
 				addToSet({
 					key: `${redisGlobalPrepend}.routes`,
 					value: route.id
@@ -167,7 +198,8 @@ const save = ({ query: { name, ...settings } }) => {
 				.then(() => Promise.all(Object.keys(route).reduce((promises, k) => {
 					if (![
 						'systems',
-						'settings'
+						'settings',
+						'stats'
 					].includes(k)) {
 						promises.push(setString({
 							key: `${redisGlobalPrepend}.route.${route.id}.${k}`,
@@ -182,6 +214,10 @@ const save = ({ query: { name, ...settings } }) => {
 						value: route.settings[k]
 					})
 				)))
+				.then(() => Promise.all(Object.keys(route.stats).map(k => incrementBy({
+					key: `${redisGlobalPrepend}.route.${route.id}.stats.${k}`,
+					value: route.stats[k]
+				}))))
 				.then(() => Promise.all(route.systems.map(system => 
 					addToSortedSet({
 						key: `${redisGlobalPrepend}.route.${route.id}.systems`,
@@ -311,6 +347,32 @@ const route = ({
 					}
 				}))
 			)
+			.then(route => Promise.all([
+					'total_credits',
+					'total_jumps',
+					'total_bodies',
+					'completed_jumps',
+					'completed_bodies'
+				].map(k => getString({
+					key: `${redisGlobalPrepend}.route.${routeId}.stats.${k}`
+				})))
+				.then(([
+					total_credits,
+					total_jumps,
+					total_bodies,
+					completed_jumps,
+					completed_bodies
+				]) => ({
+					...route,
+					stats: {
+						total_credits: parseInt(total_credits),
+						total_jumps: parseInt(total_jumps),
+						total_bodies: parseInt(total_bodies),
+						completed_jumps: parseInt(completed_jumps),
+						completed_bodies: parseInt(completed_bodies)
+					}
+				}))
+			)
 			.then(route => {
 				const paged = page != void 0 && numPerPage != void 0
 				return getSortedSetRange({
@@ -391,34 +453,6 @@ const route = ({
 					}))
 				)
 			})
-			.then(({ systems, ...route }) => {
-				route.stats = systems.reduce((stats, s) => {
-					stats.total_jumps += parseInt(s.jumps)
-					stats.total_bodies += s.bodies.length
-					const completedBodyCount = s.bodies.reduce((completedBodyCount, b) => {
-						if (b.complete) {
-							completedBodyCount++
-						}
-						return completedBodyCount
-					}, 0)
-					if (completedBodyCount == s.bodies.length) {
-						stats.completed_jumps++
-					}
-					stats.completed_bodies += completedBodyCount
-					return stats
-				}, {
-					total_jumps: 0,
-					total_bodies: 0,
-					completed_jumps: 0,
-					completed_bodies: 0
-				})
-				route.stats.progress =
-					Math.floor(100 * (route.stats.completed_bodies / route.stats.total_bodies))
-				return {
-					...route,
-					systems
-				}
-			})
 			.then(route => {
 				rc.quit()
 				return route
@@ -433,7 +467,7 @@ const setBodyComplete = ({
 		routeName, 
 		systemName, 
 		bodyName, 
-		complete
+		complete: completeStr
 	}
 }) => getRedisClient()
 	.then(rc => {
@@ -441,19 +475,32 @@ const setBodyComplete = ({
 		const systemId = convertNameToId({ name: systemName })
 		const bodyId = convertNameToId({ name: bodyName })
 		const setString = setStringWithClient({ rc })
-		return setString({
-			key: `${redisGlobalPrepend}.route.${routeId}.system.${systemId}.body.${bodyId}.complete`,
-			value: complete === 'true'
-		})
-		.then(res => {
+		const incrementBy = incrementByWithClient({ rc })
+		const decrementBy = decrementByWithClient({ rc })
+		const complete = completeStr === 'true'
+		const adjustment = {
+			key: `${redisGlobalPrepend}.route.${routeId}.stats.completed_bodies`,
+			value: 1
+		}
+		Promise.all([
+			complete ? incrementBy(adjustment) : decrementBy(adjustment),
+			Promise.resolve(0)
+		])
+		.then(([ completed_bodies, completed_jumps ]) => {
 			process.nextTick(() => io.emit('body-marked-complete', {
 				route: routeName,
 				system: systemName,
 				body: bodyName,
-				complete: complete === 'true'
+				complete,
+				completed_bodies,
+				completed_jumps
 			}))
-			return res
 		})
+		return setString({
+			key: `${redisGlobalPrepend}.route.${routeId}.system.${systemId}.body.${bodyId}.complete`,
+			value: complete
+		})
+		
 	})
 	.then(res => ({ res }))
 

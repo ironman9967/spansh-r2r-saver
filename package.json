@@ -9,6 +9,7 @@
 		"build": "npm run build-service && npm run build-client",
 		"start-service": "node dist/index.js",
 		"start-service-only": "npm run build-service && npm run start-service -- 8000",
+		"start-service-only-debug": "npm run build-service && npm run start-service",
 		"start": "npm run build && npm run start-service",
 		"watch": "npm-watch"
 	},

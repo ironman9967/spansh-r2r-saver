@@ -15,24 +15,9 @@ import TablePagination from '@material-ui/core/TablePagination'
 import Checkbox from '@material-ui/core/Checkbox'
 import TextField from '@material-ui/core/TextField'
 
-import routeSettingFields from './route-settings-fields'
+import RouteStatsTable from './route-stats-table'
 
-const routeStatFields = [{
-	id: 'progress',
-	label: 'progress'
-}, {
-	id: 'total_jumps',
-	label: 'total jumps'
-}, {
-	id: 'completed_jumps',
-	label: 'completed jumps'
-}, {
-	id: 'total_bodies',
-	label: 'total bodies'
-}, {
-	id: 'completed_bodies',
-	label: 'completed bodies'
-}]
+import routeSettingFields from './route-settings-fields'
 
 const systemFields = [{
 	id: 'name',
@@ -110,30 +95,7 @@ const c = ({
 					</TableRow>
 				</TableBody>
 			</Table>
-			<Table>
-				<TableHead>
-					<TableRow>
-					{
-						routeStatFields.map(({ label }, i) => (
-							<TableCell key={i} align="right">{label}</TableCell>
-						))
-					}
-					</TableRow>
-				</TableHead>
-				<TableBody>
-					<TableRow>
-					{
-						routeStatFields.map(({ id }, i) => (
-							<TableCell key={i} align="right">
-							{
-								`${selected.stats[id]}${ id === 'progress' ? '%' : '' }`
-							}
-							</TableCell>
-						))
-					}
-					</TableRow>
-				</TableBody>
-			</Table>
+			<RouteStatsTable />
 			<div>SYSTEMS:</div>
 			<Table>
 				<TableHead>

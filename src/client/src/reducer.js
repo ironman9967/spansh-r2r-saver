@@ -48,7 +48,12 @@ export default (state = {
 			return {
 				...state, 
 				selected : {
-					...state.selected, 
+					...state.selected,
+					stats: {
+						...state.selected.stats,
+						completed_bodies: action.completed_bodies,
+						completed_jumps: action.completed_jumps
+					},
 					systems: state.selected.systems.map(system => system.name === action.system 
 						? ({
 							...system, 
