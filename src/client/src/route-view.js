@@ -17,6 +17,23 @@ import TextField from '@material-ui/core/TextField'
 
 import routeSettingFields from './route-settings-fields'
 
+const routeStatFields = [{
+	id: 'progress',
+	label: 'progress'
+}, {
+	id: 'total_jumps',
+	label: 'total jumps'
+}, {
+	id: 'completed_jumps',
+	label: 'completed jumps'
+}, {
+	id: 'total_bodies',
+	label: 'total bodies'
+}, {
+	id: 'completed_bodies',
+	label: 'completed bodies'
+}]
+
 const systemFields = [{
 	id: 'name',
 	label: 'name'
@@ -82,29 +99,37 @@ const c = ({
 				<TableBody>
 					<TableRow>
 					{
-						routeSettingFields.map(({ id }, i) => [
-							'name',
-							'total_jumps',
-							'completed_jumps',
-							'total_bodies',
-							'completed_bodies',
-							'progress'
-						].includes(id)
+						routeSettingFields.map(({ id }, i) => id === 'name'
 							? (
-								<TableCell
-									key={i}
-								>
-									{selected[id]}
-								</TableCell>
+								<TableCell key={i}>{selected.name}</TableCell>
 							)
 							: (
-								<TableCell
-									key={i}
-								>
-									{selected.settings[id]}
-								</TableCell>
-							)
-						)
+								<TableCell key={i}>{selected.settings[id]}</TableCell>
+							))
+					}
+					</TableRow>
+				</TableBody>
+			</Table>
+			<Table>
+				<TableHead>
+					<TableRow>
+					{
+						routeStatFields.map(({ label }, i) => (
+							<TableCell key={i} align="right">{label}</TableCell>
+						))
+					}
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					<TableRow>
+					{
+						routeStatFields.map(({ id }, i) => (
+							<TableCell key={i} align="right">
+							{
+								`${selected.stats[id]}${ id === 'progress' ? '%' : '' }`
+							}
+							</TableCell>
+						))
 					}
 					</TableRow>
 				</TableBody>
@@ -148,7 +173,10 @@ const c = ({
 											</TableHead>
 											<TableBody>
 											{
-												system.bodies.map((body, i) => (
+												system.bodies.sort(({ order: o1 }, { order: o2}) => o1 <= o2
+													? -1
+													: 1
+												).map((body, i) => (
 													<TableRow key={i}>
 													{
 														bodyFields.map(({ id }) => (

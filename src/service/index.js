@@ -13,8 +13,10 @@ import fetch from 'node-fetch'
 
 import redis from 'redis'
 
+const [ ,, port ] = process.argv
+
 const server = Hapi.server({
-	port: process.env.PORT || 8000,
+	port: port || process.env.PORT || 8000,
 	routes: {
 		files: {
 			relativeTo: path.resolve(__dirname, 'public')
@@ -117,25 +119,29 @@ const fetchDataFromSpansh = ({ settings }) => {
 	.then(route => {
 		const { name: origin } = route.shift()
 		const { name: destination } = route.pop()
-		let counter = 0
+		let sysCounter = 0
 		return {
 			created: Date.now(),
 			origin,
 			destination,
 			settings,
 			systemCount: route.length,
-			systems: route.map(({ bodies, name, ...system }) => ({
-				id: convertNameToId({ name }),
-				order: counter++,
-				name,
-				...system,
-				bodies: bodies.map(({ id, name, ...body }) => ({
+			systems: route.map(({ bodies, name, ...system }) => {
+				let bodyCounter = 0
+				return {
 					id: convertNameToId({ name }),
+					order: sysCounter++,
 					name,
-					complete: false,
-					...body
-				}))
-			}))
+					...system,
+					bodies: bodies.map(({ id, name, ...body }) => ({
+						id: convertNameToId({ name }),
+						order: bodyCounter++,
+						name,
+						complete: false,
+						...body
+					}))
+				}
+			})
 		}
 	})
 }
@@ -195,8 +201,9 @@ const save = ({ query: { name, ...settings } }) => {
 						value: system.order
 					}))
 					.then(() => Promise.all(system.bodies.map(body => 
-						addToSet({
+						addToSortedSet({
 							key: `${redisGlobalPrepend}.route.${route.id}.system.${system.id}.bodies`,
+							score: body.order,
 							value: body.id
 						})
 						.then(() => Promise.all(Object.keys(body).map(k =>
@@ -244,7 +251,6 @@ const route = ({
 		return getRedisClient()
 		.then(rc => {
 			const routeId = convertNameToId({ name })
-			const getSetMembers = getSetMemebersWithClient({ rc })
 			const getSortedSetRange = getSortedSetRangeWithClient({ rc })
 			const getString = getStringWithClient({ rc })
 			return Promise.all([
@@ -334,11 +340,14 @@ const route = ({
 						order,
 						jumps
 					}))
-					.then(system => getSetMembers({
-							key: `${redisGlobalPrepend}.route.${routeId}.system.${systemId}.bodies`
+					.then(system => getSortedSetRange({
+							key: `${redisGlobalPrepend}.route.${routeId}.system.${systemId}.bodies`,
+							start: 0,
+							stop: -1
 						})
 						.then(bodies => Promise.all(bodies.map(bodyId => Promise.all([
 							'name',
+							'order',
 							'complete',
 							'distance_to_arrival',
 							'estimated_mapping_value',
@@ -351,6 +360,7 @@ const route = ({
 						})))
 						.then(([
 							name,
+							order,
 							complete,
 							distance_to_arrival,
 							estimated_mapping_value,
@@ -360,6 +370,7 @@ const route = ({
 							type
 						]) => ({
 							id: bodyId,
+							order,
 							name,
 							complete: complete == 'true',
 							distance_to_arrival,
@@ -379,6 +390,34 @@ const route = ({
 						systems
 					}))
 				)
+			})
+			.then(({ systems, ...route }) => {
+				route.stats = systems.reduce((stats, s) => {
+					stats.total_jumps += parseInt(s.jumps)
+					stats.total_bodies += s.bodies.length
+					const completedBodyCount = s.bodies.reduce((completedBodyCount, b) => {
+						if (b.complete) {
+							completedBodyCount++
+						}
+						return completedBodyCount
+					}, 0)
+					if (completedBodyCount == s.bodies.length) {
+						stats.completed_jumps++
+					}
+					stats.completed_bodies += completedBodyCount
+					return stats
+				}, {
+					total_jumps: 0,
+					total_bodies: 0,
+					completed_jumps: 0,
+					completed_bodies: 0
+				})
+				route.stats.progress =
+					Math.floor(100 * (route.stats.completed_bodies / route.stats.total_bodies))
+				return {
+					...route,
+					systems
+				}
 			})
 			.then(route => {
 				rc.quit()
