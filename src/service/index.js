@@ -29,14 +29,14 @@ const io = SocketIO.listen(server.listener)
 const spanshApiRoute = 'https://spansh.co.uk/api'
 const redisGlobalPrepend = 'spansh-r2r-saver'
 
-const getRoute = ({ job }) => new Promise(resolve => 
-	setTimeout(() => fetch(`${spanshApiRoute}/results/${job}`)
-		.then(res => res.json())
-		.then(({ status, result }) => resolve(status == 'queued'
+const getRoute = ({ job }) => new Promise(resolve => setTimeout(resolve, 50))
+	.then(() => fetch(`${spanshApiRoute}/results/${job}`))
+	.then(res => res.json())
+	.then(({ status, result, error }) => error
+		? { error }
+		: status == 'queued'
 			? getRoute({ job })
-			: result))
-	, 50)
-)
+			: result)
 
 const convertNameToId = ({ name }) => name.replace(/ /g, '#').replace(/\./g, '$')
 
@@ -167,6 +167,7 @@ const fetchDataFromSpansh = ({ settings }) => {
 			})
 		}
 	})
+	.catch(console.error)
 }
 		
 const save = ({ query: { name, ...settings } }) => {
@@ -521,7 +522,7 @@ const deleteRoute = ({ query: { name } }) => {
 				value: routeId
 			})
 			.then(() => keys({
-				search: `${redisGlobalPrepend}.route.${routeId}.*`
+				pattern: `${redisGlobalPrepend}.route.${routeId}.*`
 			}))
 			.then(keys => Promise.all(keys.map(key => delKey({
 				key
