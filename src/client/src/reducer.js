@@ -1,5 +1,6 @@
 
 export default (state = {
+	error: null,
 	routeNames: [],
     selected: null,
     selectedSystemsPage: 0,
@@ -11,6 +12,7 @@ export default (state = {
 }, { type, ...action }) => {
 	const clear = s => ({
 		...s,
+		error: null,
 		loading: false,
 		deleting: false,
 		saving: false,
@@ -74,8 +76,6 @@ export default (state = {
 					}
 				}
 			}
-		// case 'completed_jumps':
-		// 	return {}
 		case 'set-selected-page':
 			return { ...state, selectedSystemsPage: action.page }
 		case 'set-selected-num-per-page':
@@ -83,6 +83,12 @@ export default (state = {
 				...state, 
 				selectedSystemsPage: action.page,
 				selectedSystemsNumPerPage: action.numPerPage
+			}
+		case 'error':
+			return {
+				...state,
+				...clear(state),
+				error: action.error
 			}
 		default:
 			break

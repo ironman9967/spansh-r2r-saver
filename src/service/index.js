@@ -32,11 +32,15 @@ const redisGlobalPrepend = 'spansh-r2r-saver'
 const getRoute = ({ job }) => new Promise(resolve => setTimeout(resolve, 50))
 	.then(() => fetch(`${spanshApiRoute}/results/${job}`))
 	.then(res => res.json())
-	.then(({ status, result, error }) => error
-		? { error }
-		: status == 'queued'
-			? getRoute({ job })
-			: result)
+	.then(({ status, result, error }) => {
+		if (error) {
+			return Promise.reject(new Error(error))
+		}
+		if (status == 'queued') {
+			return getRoute({ job })
+		}
+		return result
+	})
 
 const convertNameToId = ({ name }) => name.replace(/ /g, '#').replace(/\./g, '$')
 
@@ -167,7 +171,6 @@ const fetchDataFromSpansh = ({ settings }) => {
 			})
 		}
 	})
-	.catch(console.error)
 }
 		
 const save = ({ query: { name, ...settings } }) => {
@@ -261,9 +264,13 @@ const save = ({ query: { name, ...settings } }) => {
 						)))
 					)))
 				)))
-				.then(() => rc.quit())
+				.then(() => {
+					rc.quit()
+					return { success: true }
+				})
 			})
 		})
+		.catch(err => ({ error: err.message }))
 	}
 	return Promise.resolve({ error: 'name is required' })
 }

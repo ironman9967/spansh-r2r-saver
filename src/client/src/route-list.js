@@ -19,6 +19,11 @@ class c extends Component {
 	render() {
 		return (
 			<div className="App">
+				{
+					this.props.error
+					? <div>{this.props.error}</div>
+					: void 0
+				}
 				<div>ROUTES:</div>
 				<div onClick={this.props.addNew}>ADD NEW</div>
 				{
