@@ -22,11 +22,11 @@ export default [{
 }, {
 	id: 'max_results',
 	label: 'max results',
-	defVal: 10
+	defVal: 80
 }, {
 	id: 'min_value',
 	label: 'min value',
-	defVal: 300000
+	defVal: 500000
 }, {
 	id: 'use_mapping_value',
 	label: 'use mapping value',
@@ -34,5 +34,5 @@ export default [{
 }, {
 	id: 'max_distance',
 	label: 'max distance',
-	defVal: 1000000
+	defVal: 50000
 }]
