@@ -70,14 +70,16 @@ const c = ({
 		<div className="App">
 			<div>ROUTE VIEW:</div>
 			<div onClick={clearSelected}>{'<-'}</div>
+
 			<div>ROUTE:</div>
 			<Table>
 				<TableHead>
 					<TableRow>
 					{
-						routeSettingFields.map(({ label }, i) => (
-							<TableCell key={i}>{label}</TableCell>
-						))
+						routeSettingFields.map(({ label }, i) => {
+						
+							return <TableCell key={i}>{label}</TableCell>
+						})
 					}
 					</TableRow>
 				</TableHead>

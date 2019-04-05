@@ -29,12 +29,14 @@ const routeStatFields = [{
 }]
 
 const c = ({
-	rawStats
+	rawStats,
+	scanValueCompleted
 }) => {
 	return (
 		<Table>
 			<TableHead>
 				<TableRow>
+				<TableCell key="scanValueCompleted" align="right">Scan Value Completed</TableCell>
 				{
 					routeStatFields.map(({ label }, i) => (
 						<TableCell key={i} align="right">{label}</TableCell>
@@ -44,7 +46,9 @@ const c = ({
 			</TableHead>
 			<TableBody>
 				<TableRow>
+				<TableCell key="scanValueCompleted" align="right">{scanValueCompleted}</TableCell>
 				{
+				
 					routeStatFields.map(({ id }, i) => {
 						const stats = { ...rawStats }
 						stats.progress = Math.ceil((stats.completed_bodies / stats.total_bodies) * 100)
@@ -64,9 +68,11 @@ const c = ({
 }
 
 export default connect(({
+	scanValueCompleted,
 	selected: {
 		stats
 	}
 }) => ({
+	scanValueCompleted,
 	rawStats: stats
 }))(c)

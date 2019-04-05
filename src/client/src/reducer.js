@@ -47,7 +47,9 @@ export default (state = {
 		case 'deleted':
 			return clear(state)
 		case 'body-marked-complete':
-			return {
+			
+				
+			state = {
 				...state, 
 				selected : {
 					...state.selected,
@@ -65,6 +67,16 @@ export default (state = {
 					)} 
 				
 			}
+			
+			return {
+				...state,
+				scanValueCompleted : state.selected.systems
+					.reduce((bodies,system) => bodies.concat(system.bodies), [])
+					.filter(body => body.complete)
+					.map(body => body.estimated_scan_value)
+					.reduce((a,b)=>parseInt(a)+parseInt(b))
+			}
+			
 		case 'completed_bodies':
 			return {
 				...state,
