@@ -30,11 +30,14 @@ import Avatar from '@material-ui/core/Avatar';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 
+
 import Typography from '@material-ui/core/Typography';
 
 import RouteStatsTable from './route-stats-table'
 
 import routeSettingFields from './route-settings-fields'
+
+import SystemName from './components/SystemName'
 
 const systemFields = [{
 	id: 'name',
@@ -98,6 +101,16 @@ const c = ({
 	  	marginTop:20
 	  }
 	}
+	
+	// const copyToClipboard = (e) => {
+ //   this.textArea.select();
+ //   document.execCommand('copy');
+ //   // This is just personal preference.
+ //   // I prefer to not show the the whole text area selected.
+ //   e.target.focus();
+ //   this.setState({ copySuccess: 'Copied!' });
+ // };
+ 
 		
 		
 	return (
@@ -159,7 +172,7 @@ const c = ({
 									style={{
 										minWidth: 200
 									}}
-								>{label}</TableCell>
+								>{label}</TableCell> 
 							)
 							: (
 								<TableCell key={id}>{label}</TableCell>
@@ -179,7 +192,7 @@ const c = ({
 									? (
 										<TableCell 
 											key={id}
-										>{system[id]}</TableCell>
+										><SystemName name={system[id]}/></TableCell>
 									)
 									: (
 										<TableCell key={id}>
