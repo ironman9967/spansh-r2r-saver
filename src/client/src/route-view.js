@@ -15,6 +15,23 @@ import TablePagination from '@material-ui/core/TablePagination'
 import Checkbox from '@material-ui/core/Checkbox'
 import TextField from '@material-ui/core/TextField'
 
+
+import Button from '@material-ui/core/Button';
+import { withStyles } from '@material-ui/core/styles';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import Divider from '@material-ui/core/Divider';
+import InboxIcon from '@material-ui/icons/Inbox';
+import DraftsIcon from '@material-ui/icons/Drafts';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
+import Avatar from '@material-ui/core/Avatar';
+import IconButton from '@material-ui/core/IconButton';
+import DeleteIcon from '@material-ui/icons/Delete';
+
+import Typography from '@material-ui/core/Typography';
+
 import RouteStatsTable from './route-stats-table'
 
 import routeSettingFields from './route-settings-fields'
@@ -66,150 +83,178 @@ const c = ({
 	setBodyComplete
 }) => {
 	let goToPageStr = '0'
+	
+	const style = {
+	  button: {
+	    margin: 10,
+	  },
+	  input: {
+	    display: 'none',
+	  },
+	  app:{
+	  	margin:20
+	  },
+	  section: {
+	  	marginTop:20
+	  }
+	}
+		
+		
 	return (
-		<div className="App">
-			<div>ROUTE VIEW:</div>
-			<div onClick={clearSelected}>{'<-'}</div>
+		<div>
+			
+			<Typography variant="h4" gutterBottom>
+				{selected.name}
+			</Typography>
+			<Button variant="outlined" style={style.button} onClick={clearSelected}>back</Button>
 
-			<div>ROUTE:</div>
-			<Table>
-				<TableHead>
-					<TableRow>
-					{
-						routeSettingFields.map(({ label }, i) => {
-						
-							return <TableCell key={i}>{label}</TableCell>
-						})
-					}
-					</TableRow>
-				</TableHead>
-				<TableBody>
-					<TableRow>
-					{
-						routeSettingFields.map(({ id }, i) => id === 'name'
-							? (
-								<TableCell 
-									key={i}
-									style={{
-										minWidth: 100
-									}}
-								>{selected.name}</TableCell>
-							)
-							: (
-								<TableCell key={i}>{selected.settings[id]}</TableCell>
-							))
-					}
-					</TableRow>
-				</TableBody>
-			</Table>
-			<RouteStatsTable />
-			<div>SYSTEMS:</div>
-			<Table>
-				<TableHead>
-					<TableRow>
-					{
-						systemFields.map(({ id, label }) => id === 'name'
-						? (
-							<TableCell 
-								key={id}
-								style={{
-									minWidth: 200
-								}}
-							>{label}</TableCell>
-						)
-						: (
-							<TableCell key={id}>{label}</TableCell>
-						))
-					}
-					</TableRow>
-				</TableHead>
-				<TableBody>
-				{
-					selected.systems.sort(({ order: o1 }, { order: o2}) => o1 <= o2
-						? -1
-						: 1
-					).map((system, i) => (
-						<TableRow key={i}>
+			<div style={style.section}>
+				<Typography component="h5" gutterBottom>
+		          Route
+		        </Typography>
+				<Table>
+					<TableHead>
+						<TableRow>
 						{
-							systemFields.map(({ id }) => id !== 'bodies'
+							routeSettingFields.map(({ label }, i) => {
+							
+								return <TableCell key={i}>{label}</TableCell>
+							})
+						}
+						</TableRow>
+					</TableHead>
+					<TableBody>
+						<TableRow>
+						{
+							routeSettingFields.map(({ id }, i) => id === 'name'
 								? (
 									<TableCell 
-										key={id}
-									>{system[id]}</TableCell>
+										key={i}
+										style={{
+											minWidth: 100
+										}}
+									>{selected.name}</TableCell>
 								)
 								: (
-									<TableCell key={id}>
-										<Table>
-											<TableHead>
-												<TableRow>
-												{
-													bodyFields.map(({ id, label }) => (
-														<TableCell key={id}>{label}</TableCell>
-													))
-												}
-												</TableRow>
-											</TableHead>
-											<TableBody>
-											{
-												system.bodies.sort(({ order: o1 }, { order: o2}) => o1 <= o2
-													? -1
-													: 1
-												).map((body, i) => (
-													<TableRow key={i}>
-													{
-														bodyFields.map(({ id }) => (
-															<TableCell key={id}>{
-																id === 'complete'
-																? <Checkbox
-																	checked={body[id]}
-																	onChange={event => setBodyComplete({
-																		selected,
-																		system,
-																		body,
-																		complete: event.target.checked
-																	})}
-																/>
-																: body[id]
-															}</TableCell>
-														))
-													}
-													</TableRow>
-												))
-											}
-											</TableBody>
-										</Table>
-									</TableCell>
+									<TableCell key={i}>{selected.settings[id]}</TableCell>
 								))
 						}
 						</TableRow>
-					))
-				}
-				</TableBody>
-				<TableFooter>
-					<TableRow>
-						<TablePagination
-							rowsPerPageOptions={[5, 10, 25]}
-							colSpan={3}
-							count={selected.systemCount}
-							rowsPerPage={selectedSystemsNumPerPage}
-							page={selectedSystemsPage}
-							SelectProps={{
-								native: true,
-							}}
-							onChangePage={(event, page) => updateSelected({ 
-								name: selected.name,
-								page,
-								numPerPage: selectedSystemsNumPerPage
-							})}
-							onChangeRowsPerPage={event => updateSelected({ 
-								name: selected.name,
-								page: 0,
-								numPerPage: parseInt(event.target.value)
-							})}
-						/>
-					</TableRow>
-				</TableFooter>
-			</Table>
+					</TableBody>
+				</Table>
+				<RouteStatsTable />
+			</div>
+			<div style={style.section}>
+				<Typography component="h5" gutterBottom>
+		          Systems
+		        </Typography>
+				<Table>
+					<TableHead>
+						<TableRow>
+						{
+							systemFields.map(({ id, label }) => id === 'name'
+							? (
+								<TableCell 
+									key={id}
+									style={{
+										minWidth: 200
+									}}
+								>{label}</TableCell>
+							)
+							: (
+								<TableCell key={id}>{label}</TableCell>
+							))
+						}
+						</TableRow>
+					</TableHead>
+					<TableBody>
+					{
+						selected.systems.sort(({ order: o1 }, { order: o2}) => o1 <= o2
+							? -1
+							: 1
+						).map((system, i) => (
+							<TableRow key={i}>
+							{
+								systemFields.map(({ id }) => id !== 'bodies'
+									? (
+										<TableCell 
+											key={id}
+										>{system[id]}</TableCell>
+									)
+									: (
+										<TableCell key={id}>
+											<Table>
+												<TableHead>
+													<TableRow>
+													{
+														bodyFields.map(({ id, label }) => (
+															<TableCell key={id}>{label}</TableCell>
+														))
+													}
+													</TableRow>
+												</TableHead>
+												<TableBody>
+												{
+													system.bodies.sort(({ order: o1 }, { order: o2}) => o1 <= o2
+														? -1
+														: 1
+													).map((body, i) => (
+														<TableRow key={i}>
+														{
+															bodyFields.map(({ id }) => (
+																<TableCell key={id}>{
+																	id === 'complete'
+																	? <Checkbox
+																		checked={body[id]}
+																		onChange={event => setBodyComplete({
+																			selected,
+																			system,
+																			body,
+																			complete: event.target.checked
+																		})}
+																	/>
+																	: body[id]
+																}</TableCell>
+															))
+														}
+														</TableRow>
+													))
+												}
+												</TableBody>
+											</Table>
+										</TableCell>
+									))
+							}
+							</TableRow>
+						))
+					}
+					</TableBody>
+					<TableFooter>
+						<TableRow>
+							<TablePagination
+								rowsPerPageOptions={[5, 10, 25]}
+								colSpan={3}
+								count={selected.systemCount}
+								rowsPerPage={selectedSystemsNumPerPage}
+								page={selectedSystemsPage}
+								SelectProps={{
+									native: true,
+								}}
+								onChangePage={(event, page) => updateSelected({ 
+									name: selected.name,
+									page,
+									numPerPage: selectedSystemsNumPerPage
+								})}
+								onChangeRowsPerPage={event => updateSelected({ 
+									name: selected.name,
+									page: 0,
+									numPerPage: parseInt(event.target.value)
+								})}
+							/>
+						</TableRow>
+					</TableFooter>
+				</Table>
+			</div>
 			<TextField
 				label={`1-${Math.ceil(selected.systemCount / selectedSystemsNumPerPage)}`}
 				onChange={event => goToPageStr = event.target.value}

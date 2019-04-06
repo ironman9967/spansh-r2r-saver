@@ -30,13 +30,17 @@ const routeStatFields = [{
 
 const c = ({
 	rawStats,
-	scanValueCompleted
+	scanValueCompleted,
+	mappingValueCompleted,
+	valueCompleted
 }) => {
 	return (
 		<Table>
 			<TableHead>
 				<TableRow>
 				<TableCell key="scanValueCompleted" align="right">Scan Value Completed</TableCell>
+				<TableCell key="mappingValueCompleted" align="right">Mapping Value Completed</TableCell>
+				<TableCell key="valueCompleted" align="right">Total Value Completed</TableCell>
 				{
 					routeStatFields.map(({ label }, i) => (
 						<TableCell key={i} align="right">{label}</TableCell>
@@ -47,6 +51,8 @@ const c = ({
 			<TableBody>
 				<TableRow>
 				<TableCell key="scanValueCompleted" align="right">{scanValueCompleted}</TableCell>
+				<TableCell key="mappingValueCompleted" align="right">{mappingValueCompleted}</TableCell>
+				<TableCell key="valueCompleted" align="right">{valueCompleted}</TableCell>
 				{
 				
 					routeStatFields.map(({ id }, i) => {
@@ -68,11 +74,17 @@ const c = ({
 }
 
 export default connect(({
-	scanValueCompleted,
+	currentRouteValues:{
+		scanValueCompleted,
+		mappingValueCompleted,
+		valueCompleted
+	},
 	selected: {
 		stats
 	}
 }) => ({
+	rawStats: stats,
 	scanValueCompleted,
-	rawStats: stats
+	mappingValueCompleted,
+	valueCompleted
 }))(c)

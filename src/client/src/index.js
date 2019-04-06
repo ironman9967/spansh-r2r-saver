@@ -1,5 +1,11 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
+import MuiThemeProvider from '@material-ui/core/styles/MuiThemeProvider';
+import { createMuiTheme } from '@material-ui/core/styles';
+
+import CssBaseline from '@material-ui/core/CssBaseline';
+
+import 'typeface-roboto'
 import './index.css'
 import App from './App'
 import * as serviceWorker from './serviceWorker'
@@ -27,10 +33,23 @@ events.forEach(type => socket.on(type, p => store.dispatch({ type, ...p })))
 
 const rootElement = document.getElementById('root')
 
+const theme = createMuiTheme({
+  palette: {
+    type: 'dark',
+  },
+});
+
+
 ReactDOM.render(
-  <Provider store={store}>
-    <App />
-  </Provider>,
+  <MuiThemeProvider theme={theme}>
+    <Provider store={store}>
+      <React.Fragment>
+        <CssBaseline />
+        <App />
+      </React.Fragment>
+    </Provider>
+  </MuiThemeProvider>
+  ,
   rootElement
 )
 

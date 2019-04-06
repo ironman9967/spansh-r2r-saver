@@ -1,4 +1,23 @@
 
+const calculateScanValues = state => state.selected.systems
+	.reduce((bodies,system) => bodies.concat(system.bodies), [])
+	.filter(body => body.complete)
+	.map(body => body.estimated_scan_value)
+	.reduce((a,b)=>parseInt(a)+parseInt(b), 0)
+	
+const calculateMappingValues = state => state.selected.systems
+	.reduce((bodies,system) => bodies.concat(system.bodies), [])
+	.filter(body => body.complete)
+	.map(body => body.estimated_mapping_value)
+	.reduce((a,b)=>parseInt(a)+parseInt(b), 0)
+	
+const currentRouteValues = state => ({
+	scanValueCompleted: calculateScanValues(state),
+	mappingValueCompleted: calculateMappingValues(state),
+	valueCompleted: calculateMappingValues(state)+calculateScanValues(state)
+})
+
+
 export default (state = {
 	error: null,
 	routeNames: [],
@@ -25,10 +44,15 @@ export default (state = {
 		case 'clear-route-names':
 			return {...state, routeNames: [] }
 		case 'set-selected-route':
-			return {
+			state =  {
 				...state, 
 				...clear(state), 
 				selected: action.route
+			}
+			
+			return {
+				...state,
+				currentRouteValues: currentRouteValues(state)
 			}
 		case 'loading':
 			return {...state, loading: true }
@@ -70,11 +94,7 @@ export default (state = {
 			
 			return {
 				...state,
-				scanValueCompleted : state.selected.systems
-					.reduce((bodies,system) => bodies.concat(system.bodies), [])
-					.filter(body => body.complete)
-					.map(body => body.estimated_scan_value)
-					.reduce((a,b)=>parseInt(a)+parseInt(b))
+				currentRouteValues: currentRouteValues(state)
 			}
 			
 		case 'completed_bodies':

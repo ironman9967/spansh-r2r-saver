@@ -1,13 +1,28 @@
 
 import React from 'react'
+
+
+import Typography from '@material-ui/core/Typography';
+
+import AppBar from './components/appBar'
+
+
 import './App.css'
-import 'typeface-roboto'
+
+
+
 
 import { connect } from 'react-redux'
 
 import RouteView from './route-view'
 import RouteList from './route-list'
 import RouteAdd from './route-add'
+
+const style = {
+  app:{
+  	margin:20
+  }
+}
 
 const c = ({
 	routeNames,
@@ -19,18 +34,21 @@ const c = ({
 	saving,
 	deleting
 }) => (
-	<div className="App">
+	<div>
+		<AppBar/>
+		<div style={style.app}>
 		{loading
-			? <div className="App">LOADING ROUTE...</div>
+			? <Typography variant="subheading" gutterBottom>LOADING ROUTE...</Typography>
 			: deleting
-				? <div className="App">DELETING...</div>
+				? <Typography variant="subheading" gutterBottom>DELETING...</Typography>
 				: saving
-					? <div className="App">SAVING...</div>
+					? <Typography variant="subheading" gutterBottom>SAVING...</Typography>
 					: adding
 						? <RouteAdd />
 						: selected 
 							? <RouteView /> 
 							: <RouteList />}
+		</div>
 	</div>
 )
 
