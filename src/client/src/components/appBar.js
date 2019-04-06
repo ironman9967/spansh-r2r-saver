@@ -5,13 +5,13 @@ import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
-import MenuIcon from '@material-ui/icons/Menu';
+import AirplanemodeActive from '@material-ui/icons/AirplanemodeActive';
 
 const styles = {
   root: {
     flexGrow: 1,
   },
-  menuButton: {
+  airplanemodeActive: {
     marginLeft: -18,
     marginRight: 10,
   },
@@ -23,8 +23,8 @@ function DenseAppBar(props) {
     <div className={classes.root}>
       <AppBar position="static">
         <Toolbar variant="dense">
-          <IconButton className={classes.menuButton} color="inherit" aria-label="Menu">
-            <MenuIcon />
+          <IconButton className={classes.airplanemodeActive} color="inherit" aria-label="AirplanemodeActive">
+            <AirplanemodeActive />
           </IconButton>
           <Typography variant="h6" color="inherit">
             Spansh R2R Server

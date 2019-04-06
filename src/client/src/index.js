@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import MuiThemeProvider from '@material-ui/core/styles/MuiThemeProvider';
 import { createMuiTheme } from '@material-ui/core/styles';
+import grey from '@material-ui/core/colors/blueGrey';
 
 import CssBaseline from '@material-ui/core/CssBaseline';
 
@@ -35,8 +36,10 @@ const rootElement = document.getElementById('root')
 
 const theme = createMuiTheme({
   palette: {
+    primary: grey,
     type: 'dark',
-  },
+    contrastThreshold: -4
+  }
 });
 
 
