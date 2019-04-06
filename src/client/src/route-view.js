@@ -111,7 +111,7 @@ const c = ({
  //   this.setState({ copySuccess: 'Copied!' });
  // };
  
-		
+		console.log(selected)
 		
 	return (
 		<div>
@@ -182,7 +182,7 @@ const c = ({
 					</TableHead>
 					<TableBody>
 					{
-						selected.systems.sort(({ order: o1 }, { order: o2}) => o1 <= o2
+						selected.systems.sort(({ order: o1 }, { order: o2}) => parseInt(o1) <= parseInt(o2)
 							? -1
 							: 1
 						).map((system, i) => (
@@ -190,9 +190,9 @@ const c = ({
 							{
 								systemFields.map(({ id }) => id !== 'bodies'
 									? (
-										<TableCell 
-											key={id}
-										><SystemName name={system[id]}/></TableCell>
+										<TableCell key={id}>
+											<SystemName name={system[id]}/>
+										</TableCell>
 									)
 									: (
 										<TableCell key={id}>
